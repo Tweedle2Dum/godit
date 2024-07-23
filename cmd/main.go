@@ -10,28 +10,30 @@ import (
 	"github.com/godit/internal/editor"
 )
 
+func CTRLKEY (c rune) rune {
+	return c & 0x1f
+} 
+
 func main() {
 	t:= editor.EnableRawMode()
 	defer editor.DisableRawMode(t)
 	for {
 		var buffer [1]byte
 		buffer[0] = '\000'
-		n, err := os.Stdin.Read(buffer[:])
+		_, err := os.Stdin.Read(buffer[:])
 		if err != nil && err!=io.EOF && err != syscall.EAGAIN  {
 			editor.DisableRawMode(t)
 			editor.Die("read",err)
 		}
-		if n>0 && buffer[0] == 'q' {
-			fmt.Println("\nExiting...")
-			break
-		}
-		if unicode.IsControl(rune(buffer[0])) {
-			fmt.Printf("%d\r\n", rune(buffer[0]))
+		c:= rune(buffer[0])
+		
+		if unicode.IsControl(c) {
+			fmt.Printf("%d\r\n", c)
 
 		}else{
-			fmt.Printf("%d ('%c')\r\n",rune(buffer[0]),rune(buffer[0]))
+			fmt.Printf("%d ('%c')\r\n",c,c)
 		}
-		
+		if(c == CTRLKEY('q')) {break}
 	}
 
 }
