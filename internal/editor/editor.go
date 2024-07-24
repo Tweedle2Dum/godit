@@ -1,11 +1,9 @@
 package editor
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"syscall"
-
 	"golang.org/x/sys/unix"
 )
 
@@ -16,13 +14,18 @@ func CTRLKEY (c rune) rune {
 } 
 
 
+func safeExit(){
+	disableRawMode()
+	os.Exit(0)
+}
+
 
 func Die (s string, err error)  {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %v\n", s, err)
-	} else {
-		fmt.Fprintf(os.Stderr, "%s\n", s)
-	}
+	
+	os.Stderr.Write([]byte(s))
+	os.Stderr.Write([]byte("\t -------> "))
+	os.Stderr.Write([]byte(err.Error()))
+	os.Stderr.Write([]byte("\n"))
 	os.Exit(1)
 }
 
@@ -42,7 +45,6 @@ func EnableRawMode()  {
 	ct.Cc[unix.VMIN] = 0 
 	ct.Cc[unix.VTIME] = 1
 	if err := unix.IoctlSetTermios(fd, unix.TCSETS, &ct); err != nil {
-		fmt.Println("Error setting terminal to raw mode:", err)
 		Die("TCSETS",err)
 	}
 
@@ -52,11 +54,11 @@ func EnableRawMode()  {
 
 func disableRawMode() {
 	fd := int(os.Stdin.Fd())
+	os.Stdout.Write([]byte("\x1b[2J"))
+	os.Stdout.Write([]byte("\x1b[H"))
 	if err := unix.IoctlSetTermios(fd, unix.TCSETS, originaltermios); err != nil {
 		Die("error restoring terminal state",err)
 	}
-
-	
 }
 
 func editorReadKey () rune {
@@ -76,8 +78,7 @@ func ProcessKeyPress () {
 	case CTRLKEY('q') :
 		os.Stdout.Write([]byte("\x1b[2J"))
 		os.Stdout.Write([]byte("\x1b[H"))
-		disableRawMode()
-		os.Exit(0)
+		safeExit()
 	}
 }
 
