@@ -9,6 +9,12 @@ import (
 	"github.com/godit/internal/buffer"
 )
 
+
+
+const VERSION = "0.0.1" 
+
+
+
 type Editor struct {
 	t     *unix.Termios
 	srows int
@@ -29,7 +35,19 @@ func safeExit() {
 func editorDrawRows(b *buffer.Buffer) {
 	var r int
 	for r = 0; r < e.srows; r++ {
-		b.BAppend([]byte("~"))
+		if r == e.srows/3 {
+			var MSG string  = fmt.Sprintf("Welcome to Godit editor : Versin %s",VERSION)
+			var wLen int = len(MSG)
+			if(wLen>e.scol){
+				wLen = e.scol 
+				MSG = MSG[0:wLen]
+			}
+			b.BAppend([]byte(MSG))
+
+		}else{
+		 b.BAppend([]byte("~"))
+
+		}
 		b.BAppend([]byte("\x1b[K"));
 		if(r < e.srows-1) {
 			b.BAppend([]byte("\r\n"))
