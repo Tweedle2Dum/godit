@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"syscall"
+	"github.com/godit/internal/buffer"
 )
 
 type Editor struct {
@@ -25,12 +26,13 @@ func safeExit() {
 	os.Exit(0)
 }
 
-func editorDrawRows() {
+func editorDrawRows(b *buffer.Buffer) {
 	var r int
 	for r = 0; r < e.srows; r++ {
-		os.Stdout.Write([]byte("~"))
+		b.BAppend([]byte("~"))
+		b.BAppend([]byte("\x1b[K"));
 		if(r < e.srows-1) {
-			os.Stdout.Write([]byte("\r\n"))
+			b.BAppend([]byte("\r\n"))
 
 		}
 	}
@@ -96,10 +98,15 @@ func ProcessKeyPress() {
 }
 
 func RefreshScreen() {
-	os.Stdout.Write([]byte("\x1b[2J"))
-	os.Stdout.Write([]byte("\x1b[H"))
-	editorDrawRows()
-	os.Stdout.Write([]byte("\x1b[H"))
+	b := buffer.InitBuffer()
+	b.BAppend([]byte("\x1b[?25l"));
+	b.BAppend([]byte("\x1b[H"))
+	editorDrawRows(b)
+	b.BAppend([]byte("\x1b[H"))
+	b.BAppend([]byte("\x1b[?25H"));
+
+	os.Stdout.Write(b.Buf)
+	b.BFree()
 
 }
 
